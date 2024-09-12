@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+      rel="stylesheet"
+    />
+    <title>Search Page</title>
+    <style>
+      body {
+        background-color: #fefcfb;
+        font-family: "Montserrat", sans-serif;
+      }
+      .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+      .search-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+      .results {
+        margin-top: 20px;
+      }
+      .result-item {
+        margin-bottom: 10px;
+        border-bottom: 1px solid #ccc;
+        padding-bottom: 10px;
+      }
+      .message {
+        margin-top: 20px;
+        font-weight: bold;
+        color: red;
+      }
+      .input {
+        font-family: "Montserrat", sans-serif;
+      }
+      .button {
+        font-family: "Montserrat", sans-serif;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="search-container">
+        <h1>Search Documents</h1>
+        <form id="searchForm">
+          <label for="query">Enter keyword:</label>
+          <input class="input" type="text" id="query" name="query" required />
+          <button class="button" type="submit">Search</button>
+        </form>
+      </div>
+
+      <div class="results" id="results"></div>
+    </div>
+
+    <script>
+      document
+        .getElementById("searchForm")
+        .addEventListener("submit", function (event) {
+          event.preventDefault();
+          let query = document.getElementById("query").value;
+
+          if (!query.trim()) {
+            document.getElementById("results").innerHTML =
+              '<p class="message">Please enter a search term.</p>';
+            return;
+          }
+
+          fetch("/search", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: new URLSearchParams({ query: query }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              let resultsDiv = document.getElementById("results");
+              resultsDiv.innerHTML = "";
+
+              if (data.length > 0) {
+                data.forEach((item) => {
+                  let resultItem = `
+            <div class="result-item">
+              <h3>${item.title}</h3>
+              <p>${highlightQuery(query, item.sentence)}</p>
+              <strong>Similarity: ${item.similarity.toFixed(2)}</strong>
+            </div>
+          `;
+                  resultsDiv.innerHTML += resultItem;
+                });
+              } else {
+                resultsDiv.innerHTML =
+                  '<p class="message">No results found.</p>';
+              }
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+            });
+        });
+
+      function highlightQuery(query, sentence) {
+        let re = new RegExp(query, "gi");
+        return sentence.replace(
+          re,
+          (match) => `<span style="background-color: yellow;">${match}</span>`
+        );
+      }
+    </script>
+  </body>
+</html>
